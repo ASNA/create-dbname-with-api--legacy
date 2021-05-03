@@ -1,0 +1,114 @@
+﻿Using System.Security
+Using System.Collections.Generic
+
+BegClass ASNADBName Access(*Public) 
+    DclProp SourceProfile Type(ASNA.DataGate.Providers.SourceProfile) Access(*Public) 
+
+    BegConstructor Access(*Public) 
+        *This.SourceProfile = *New ASNA.DataGate.Providers.SourceProfile()
+    EndConstructor 
+
+    BegSr ResetSourceProfile Access(*Public) 
+        *This.SourceProfile = *New ASNA.DataGate.Providers.SourceProfile()        
+    EndSr
+
+    BegFunc GetPublicDBNames Type(*String) Rank(1) 
+        DclArray Result Type(*String) Rank(1) 
+
+        Result = ASNA.DataGate.Providers.DatabaseName.GetNames(*True) 
+        
+        LeaveSr Result
+    EndFunc 
+
+    BegSr ChangeCredentials Access(*Public)
+        DclSrParm DBName Type(*String) 
+        DclSrParm User Type(*String) 
+        DclSrParm Password Type(*String) 
+
+        DclFld sp Type(ASNA.DataGate.Providers.SourceProfile) 
+
+        DclArray PublicDBNames Type(*String) Rank(1) 
+        DclFld IsPublic Type(*Boolean) 
+
+        PublicDBNames = ASNA.DataGate.Providers.DatabaseName.GetNames(*True) 
+        IsPublic = System.Array.IndexOf(PublicDBNames, DBName) > -1
+
+        sp = *New ASNA.DataGate.Providers.SourceProfile(DBName)        
+        sp.User = User 
+        sp.Password = Password
+
+        If IsPublic
+            DBName = '*Public/' + DBName
+        EndIf 
+
+        Try
+            ASNA.DataGate.Providers.DatabaseName.UnRegister(DBName) 
+        Finally
+        EndTry 
+
+        ASNA.DataGate.Providers.DatabaseName.Register(sp, DBName) 
+    EndSr
+
+    BegSr AssignCustomSourceProfileDefaults Access(*Public)
+        // Reset profile to as-delivered defaults. 
+        *This.SourceProfile = *New ASNA.DataGate.Providers.SourceProfile()        
+
+        // Apply custom defaults. 
+        // Port intrinsically defaults to 5042.
+        *This.SourceProfile.Label = 'DB2'        
+        *This.SourceProfile.PlatformAttribute = '*DATALINK' //  '*SQLOLEDB' for DSS or '*DATALINK' for IBM i or local DB. 
+        *This.SourceProfile.PoolingTimeout = 20 // Expressed in minutes.
+
+        // There isn't any SLL options for pre-15.x connections.
+    EndSr
+
+    BegSr Delete Access(*Public) 
+        DclSrParm DBName Type(*String) 
+        Try
+            ASNA.DataGate.Providers.DatabaseName.UnRegister(DBName) 
+        Finally
+        EndTry 
+    EndSr 
+
+    BegSr CreatePublic Access(*Public) 
+        DclSrParm DBName Type(*String) 
+        DclSrParm User Type(*String) 
+        DclSrParm Password Type(*String) 
+
+        *This.Create(DBName, User, Password, *True) 
+    EndSr
+
+    BegSr CreatePrivate Access(*Public) 
+        DclSrParm DBName Type(*String) 
+        DclSrParm User Type(*String) 
+        DclSrParm Password Type(*String) 
+
+        *This.Create(DBName, User, Password, *False) 
+    EndSr
+
+    BegSr Create Access(*Private)
+        DclSrParm DBName Type(*String) 
+        DclSrParm User Type(*String) 
+        DclSrParm Password Type(*String) 
+        DclSrParm IsPublic Type(*Boolean) 
+
+        DclFld sp Type(ASNA.DataGate.Providers.SourceProfile)
+
+        sp = *This.SourceProfile
+
+        Try
+            ASNA.DataGate.Providers.DatabaseName.UnRegister(DBName) 
+        Finally
+        EndTry 
+
+        If IsPublic
+            DBName = '*Public/' + DBName
+        EndIf 
+
+        sp.User = User
+        sp.Password = Password
+
+        ASNA.DataGate.Providers.DatabaseName.Register(sp, DBName) 
+    EndSr 
+
+EndClass

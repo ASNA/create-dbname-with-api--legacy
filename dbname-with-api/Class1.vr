@@ -1,0 +1,36 @@
+﻿Using System
+Using System.Collections
+Using System.Text
+
+BegClass Program
+
+	BegSr Main Shared(*Yes) Access(*Public) Attributes(System.STAThread())
+		DclSrParm args Type(*String) Rank(1) 
+
+		DclFld DBName Type(ASNADBName) New()
+	
+		// Assign connection attributes
+		DBName.SourceProfile.Server = 'cypress'
+		DBName.SourceProfile.Port = 5042 // Default is 5042
+        DBName.SourceProfile.Label = 'DB2'        
+        DBName.SourceProfile.PlatformAttribute = '*DATALINK' //  '*SQLOLEDB' for DSS or '*DATALINK' for IBM i or local DB. 
+        DBName.SourceProfile.PoolingTimeout = 20 // Expressed in minutes.
+		
+        // Set initial library list like this:
+		// DGDBName.SourceProfile.InitialLibraryList = *New *String[] {'rpwork', 'dg8_160'}
+
+		// Create a public name.
+		DBName.CreatePublic('rpDelete6x', 'shakey', 'roger') 
+
+		// Create a private name.
+        // DBName.CreatePrivate('rpDelete6x', 'username', 'userpassword') 
+		
+		// Delete a database name.
+        // DBName.Delete('rpDelete6x') 
+	
+        Console.WriteLine('Press any key to continue...') 
+        Console.ReadKey()
+	EndSr
+
+EndClass
+
