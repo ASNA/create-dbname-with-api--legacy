@@ -7,30 +7,62 @@ BegClass Program
 	BegSr Main Shared(*Yes) Access(*Public) Attributes(System.STAThread())
 		DclSrParm args Type(*String) Rank(1) 
 
-		DclFld DBName Type(ASNADBName) New()
-	
-		// Assign connection attributes
-		DBName.SourceProfile.Server = 'cypress'
-		DBName.SourceProfile.Port = 5042 // Default is 5042
-        DBName.SourceProfile.Label = 'DB2'        
-        DBName.SourceProfile.PlatformAttribute = '*DATALINK' //  '*SQLOLEDB' for DSS or '*DATALINK' for IBM i or local DB. 
-        DBName.SourceProfile.PoolingTimeout = 20 // Expressed in minutes.
-		
-        // Set initial library list like this:
-		// DGDBName.SourceProfile.InitialLibraryList = *New *String[] {'rpwork', 'dg8_160'}
+        DclFld t Type(Tester) New() 
 
-		// Create a public name.
-		DBName.CreatePublic('rpDelete6x', 'shakey', 'roger') 
+        t.CreateDBName('rpDelete6', *True, 'user', 'password') 
+        t.TestConnection('*Public/rpDelete6')  
 
-		// Create a private name.
-        // DBName.CreatePrivate('rpDelete6x', 'username', 'userpassword') 
-		
-		// Delete a database name.
-        // DBName.Delete('rpDelete6x') 
-	
         Console.WriteLine('Press any key to continue...') 
         Console.ReadKey()
 	EndSr
 
 EndClass
 
+BegClass Tester
+
+    DclDB DGDB 
+
+    BegSr TestConnection Access(*Public) 
+        DclSrParm DBName Type(*String) 
+
+        DGDB.DBName = DBName 
+        
+        Try 
+            Connect DGDB 
+            Console.WriteLine('Database name {0} connected successfully', DBName) 
+            Disconnect DGDB 
+        Catch ex Type(Exception) 
+            Console.WriteLine('Database name {0} failed to connect', DBName) 
+            Console.WriteLine(ex.Message)          
+        EndTry             
+    EndSr
+
+    BegSr CreateDBName Access(*Public) 
+        DclSrParm  DBName Type(*String) 
+        DclSrParm IsPublic Type(*Boolean) 
+        DclSrParm User Type(*String)
+        DclSrParm Password Type(*String) 
+
+		DclFld DBNameApi Type(ASNADBName) New()
+	
+		// Assign connection attributes
+		DBNameApi.SourceProfile.Server = 'cypress'
+		DBNameApi.SourceProfile.Port = 5150 // Default is 5042
+        DBNameApi.SourceProfile.Label = 'DB2'        
+        DBNameApi.SourceProfile.PlatformAttribute = '*DATALINK' //  '*SQLOLEDB' for DSS or '*DATALINK' for IBM i or local DB. 
+        DBNameApi.SourceProfile.PoolingTimeout = 20 // Expressed in minutes.
+		
+        // Set initial library list like this:
+		// DGDBName.SourceProfile.InitialLibraryList = *New *String[] {'rpwork', 'dg8_160'}
+
+        If IsPublic
+		    // Create a public name.
+		    DBNameApi.CreatePublic(DBName, User, Password) 
+        Else 
+		    DBNameApi.CreatePrivate(DBName, User, Password) 
+        EndIF 
+
+        Console.WriteLine('DB Name {0} created', DBName) 
+    EndSr 
+
+EndClass 
